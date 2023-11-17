@@ -51,9 +51,7 @@
     "build/esnext/**/*.d.ts",
     "build/src/**/*.js",
     "build/src/**/*.js.map",
-    "build/src/**/*.d.ts",
-    "LICENSE",
-    "README.md"
+    "build/src/**/*.d.ts"
   ],
   "peerDependencies": {
     "@opentelemetry/api": "*"
