@@ -49,8 +49,8 @@ export interface ConsumerDef {
 
 export class Microservice {
   private config: MicroServiceConfig;
-  private readonly express: Express;
-  private logger: Logger;
+  protected readonly express: Express;
+  protected logger: Logger;
   private srv?: http.Server | https.Server;
 
   constructor(config?: MicroServiceConfig) {
