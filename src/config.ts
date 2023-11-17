@@ -44,6 +44,7 @@ export interface MicroServiceConfig {
 export const Config: MicroServiceConfig = {
   port: EnvParse.envInt('FW_MS_PORT', 8080),
   log404: EnvParse.envBool('FW_MS_LOG_404', false),
+  // FW_MS_HOSTNAME: default to hostname()
   hostname: EnvParse.envString('FW_MS_HOSTNAME', hostname()),
   address: EnvParse.envStringOptional('FW_MS_ADDRESS'),
   addresses: EnvParse.envStringList('FW_MS_ADDRESSES', []),
