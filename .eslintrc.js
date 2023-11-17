@@ -59,7 +59,7 @@ module.exports = {
       }
     },
     {
-      files: ["test/**/*.ts"],
+      files: ["tests/**/*.ts"],
       rules: {
         "no-empty": "off",
         "@typescript-eslint/ban-ts-ignore": "off",
