@@ -51,7 +51,7 @@ export class Microservice {
   private config: MicroServiceConfig;
   protected readonly express: Express;
   protected logger: Logger;
-  private srv?: http.Server | https.Server;
+  protected srv?: http.Server | https.Server;
 
   constructor(config?: MicroServiceConfig) {
     this.config = config || Config;
