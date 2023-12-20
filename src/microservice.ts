@@ -72,7 +72,9 @@ export class Microservice {
       );
     }
     if (appKeysCount > 0) {
-      this.express.use(this.preSharedTokenMiddleware);
+      this.express.use((req: Request, res: Response, next: NextFunction) => {
+        this.preSharedTokenMiddleware(req, res, next);
+      });
     }
     if (this.config.jwtPublicKey) {
       this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
