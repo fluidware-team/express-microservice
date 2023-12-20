@@ -250,31 +250,33 @@ export class Microservice {
       });
   }
 
-  preSharedTokenMiddleware(req: Request, res: Response, next: NextFunction) {
-    function getToken() {
-      const authorization = req.get('authorization');
-      if (authorization) {
-        const m = /^[Bb]earer\s+(\S+)$/.exec(authorization);
-        if (m) {
-          const [, tokenString] = m;
-          return tokenString;
-        }
-      } else if (req.query?.access_token) {
-        return req.query.access_token as string;
+  static getBearerToken(req: Request) {
+    const authorization = req.get('authorization');
+    if (authorization) {
+      const m = /^[Bb]earer\s+(\S+)$/.exec(authorization);
+      if (m) {
+        const [, tokenString] = m;
+        return tokenString;
       }
-      return null;
+    } else if (req.query?.access_token) {
+      return req.query.access_token as string;
     }
+    return null;
+  }
 
-    const token = getToken();
+  preSharedTokenMiddleware(req: Request, res: Response, next: NextFunction) {
+    const token = Microservice.getBearerToken(req);
     if (token) {
       if (token.startsWith(this.config.preSharedTokenPrefix)) {
         const appName = this.config.appKeys[token];
         if (!appName) {
-          return res.status(401).json({ status: 401, reason: 'Unauthorized' });
+          res.status(401).json({ status: 401, reason: 'Unauthorized' });
+          return;
         }
         const store = getAsyncLocalStorageStore();
         if (store === undefined) {
-          return next(new Error('failed to initialize request'));
+          next(new Error('failed to initialize request'));
+          return;
         }
         const consumer: ConsumerDef = {
           name: appName,
