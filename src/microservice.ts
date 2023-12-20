@@ -79,6 +79,7 @@ export class Microservice {
     if (this.config.jwtPublicKey) {
       this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
     }
+    this.setupPreLoggerMiddlewares();
     this.express.use(this.requestLogger);
 
     this.setupPreBodyParsersMiddlewares();
@@ -101,7 +102,8 @@ export class Microservice {
     this.express.use(errorHandlerWrap);
   }
 
-  // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
+  setupPreLoggerMiddlewares(): void {}
+
   setupPreBodyParsersMiddlewares(): void {}
 
   setupBodyParsersMiddlewares(): void {
