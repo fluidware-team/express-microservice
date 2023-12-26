@@ -16,7 +16,7 @@
     "clean": "tsc --build --clean tsconfig.json tsconfig.esm.json tsconfig.esnext.json",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
-    "test": "jest tests"
+    "test": "jest"
   },
   "engines": {
     "node": ">=18.4"
@@ -56,5 +56,8 @@
   "peerDependencies": {
     "@fluidware-it/saddlebag": "*",
     "@opentelemetry/api": "*"
+  },
+  "jest": {
+    "testPathIgnorePatterns": ["/build/"]
   }
 }
