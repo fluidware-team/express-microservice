@@ -20,10 +20,17 @@ import * as fs from 'fs';
 
 const environment = getEnvironment();
 
+// APP_KEY_${appName}: pre shared token for appName
+EnvParse.envStringOptional('APP_KEY_${appName}');
+
 const preSharedTokenPrefix = EnvParse.envString('FW_MS_PRE_SHARED_TOKEN_PREFIX', '');
 
 export interface LocalApplication {
   [token: string]: string;
+}
+
+export interface ApplicationRoles {
+  [token: string]: string[];
 }
 
 export interface MicroServiceConfig {
@@ -37,6 +44,8 @@ export interface MicroServiceConfig {
   preSharedTokenPrefix: string;
   jwtPublicKey?: string;
   appKeys: LocalApplication;
+  appRoles: ApplicationRoles;
+  appDefaultRoles: string[];
   key?: string;
   cert?: string;
 }
@@ -54,6 +63,8 @@ export const Config: MicroServiceConfig = {
   jwtPublicKey: EnvParse.envStringOptional('FW_MS_JWT_PUBLIC_KEY'),
   key: EnvParse.envStringOptional('FW_MS_KEY'),
   cert: EnvParse.envStringOptional('FW_MS_CERT'),
+  appDefaultRoles: EnvParse.envStringList('FW_APP_DEFAULT_ROLES', ['admin']),
+  appRoles: {},
   appKeys: Object.keys(environment).reduce((ret: { [key: string]: string }, name) => {
     const value = environment[name];
     function checkTokenPrefix(appName: string, token: string) {
@@ -83,6 +94,11 @@ export const Config: MicroServiceConfig = {
             });
         } else {
           checkTokenPrefix(appName, value);
+        }
+        // APP_${appName}_ROLES: roles to assign to appName
+        const appRoles = EnvParse.envStringList<string>(`APP_${appName}_ROLES`, []);
+        if (appRoles.length > 0) {
+          Config.appRoles[appName.toLowerCase()] = appRoles;
         }
       }
     }

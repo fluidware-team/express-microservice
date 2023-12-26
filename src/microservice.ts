@@ -63,8 +63,8 @@ export class Microservice {
   private setupExpress(): void {
     this.express.disable('x-powered-by');
     this.express.set('trust proxy', this.config.trustProxy);
+    this.setupInitialMiddlewares();
     this.express.use(this.instrument);
-
     const appKeysCount = Object.keys(this.config.appKeys).length;
     if (this.config.jwtPublicKey && !this.config.preSharedTokenPrefix && appKeysCount > 0) {
       this.logger.error(
@@ -101,6 +101,8 @@ export class Microservice {
     };
     this.express.use(errorHandlerWrap);
   }
+
+  setupInitialMiddlewares(): void {}
 
   setupPreLoggerMiddlewares(): void {}
 
@@ -281,7 +283,7 @@ export class Microservice {
         const consumer: ConsumerDef = {
           name: appName,
           type: 'internal',
-          roles: ['admin'],
+          roles: Config.appRoles[appName] ?? Config.appDefaultRoles,
           attr: {}
         };
         this.addConsumerToContext(consumer);
