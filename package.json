@@ -17,6 +17,7 @@
     "env2doc": "npm run compile && env2doc -p build/src > ENVIRONMENT.md",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
+    "preversion": "npm run lint && npm run test && npm run env2doc",
     "test": "jest"
   },
   "engines": {
