@@ -34,6 +34,7 @@ import * as http from 'http';
 import * as https from 'https';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import * as fs from 'fs';
+import { AddressInfo } from 'node:net';
 
 export const MicroServiceStoreSymbols = {
   NO_LOG: Symbol('fw.no_log'),
@@ -163,11 +164,14 @@ export class Microservice {
         this.srv = http.createServer(this.express);
       }
       const port = this.config.port;
+
       const onListening = () => {
-        resolve({
-          port,
-          address: this.config.addresses ? this.config.addresses.join(',') : this.config.address || ''
-        });
+        if (!this.srv) {
+          return;
+        }
+        const addressInfo = this.srv.address() as AddressInfo;
+        this.logger.info(`listening on ${addressInfo.address}:${addressInfo.port}`);
+        resolve(addressInfo);
       };
 
       const onError = (err: Error) => {
@@ -180,16 +184,16 @@ export class Microservice {
       this.srv.on('listening', onListening);
 
       if (this.config.addresses.length > 0) {
-        this.logger.info(`listen on multiple addresses ${this.config.addresses.join(',')}`);
+        if (!port) {
+          return reject(new Error('port must be set to a value greater than 0 when listening on multiple addresses'));
+        }
+        this.logger.info(`listening on multiple addresses ${this.config.addresses.join(',')}`);
         for (const address of this.config.addresses) {
-          this.logger.info(`listen on ${this.config.address}:${port}`);
           this.srv.listen(port, address);
         }
       } else if (this.config.address) {
-        this.logger.info(`listen on ${this.config.address}:${port}`);
         this.srv.listen(port, this.config.address);
       } else {
-        this.logger.info(`listen on ${port}`);
         this.srv.listen(port);
       }
     });
