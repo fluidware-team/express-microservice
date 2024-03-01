@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Config, MicroServiceConfig } from './config';
+import { Config, MicroServiceConfig, MicroServiceOptions } from './config';
 import { Logger } from 'pino';
 import { context, trace } from '@opentelemetry/api';
 import { Request, Response, Express, NextFunction } from 'express';
@@ -53,8 +53,12 @@ export class Microservice {
   protected logger: Logger;
   protected srv?: http.Server | https.Server;
 
-  constructor(config?: MicroServiceConfig) {
-    this.config = config || Config;
+  constructor(config?: MicroServiceOptions) {
+    if (config) {
+      this.config = Object.assign(Config, config);
+    } else {
+      this.config = Config;
+    }
     this.logger = getLogger();
     this.express = express();
     this.setupExpress();

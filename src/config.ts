@@ -33,6 +33,23 @@ export interface ApplicationRoles {
   [token: string]: string[];
 }
 
+export interface MicroServiceOptions {
+  port?: number;
+  log404?: boolean;
+  hostname?: string;
+  address?: string;
+  addresses?: string[];
+  trustProxy?: string[];
+  maxUploadSize?: string;
+  preSharedTokenPrefix?: string;
+  jwtPublicKey?: string;
+  appKeys?: LocalApplication;
+  appRoles?: ApplicationRoles;
+  appDefaultRoles?: string[];
+  key?: string;
+  cert?: string;
+}
+
 export interface MicroServiceConfig {
   port: number;
   log404: boolean;
