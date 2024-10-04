@@ -84,6 +84,19 @@ export class Microservice {
     if (this.config.jwtPublicKey) {
       this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
     }
+    if (!this.config.forwardUnknownBearer) {
+      // at this point, if a bearer token is present, we should have a consumer in the context, otherwise it's an invalid token
+      this.express.use((req: Request, res: Response, next: NextFunction) => {
+        if (
+          Microservice.getBearerToken(req) &&
+          !getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER)
+        ) {
+          res.status(401).json({ status: 401, reason: 'Unauthorized' });
+          return;
+        }
+        next();
+      });
+    }
     this.setupPreLoggerMiddlewares();
     this.express.use(this.requestLogger);
 
@@ -309,20 +322,7 @@ export class Microservice {
         next();
         return;
       }
-
-      function getToken() {
-        const authorization = req.get('authorization');
-        if (authorization) {
-          const m = /^[Bb]earer\s+(\S+)$/.exec(authorization);
-          if (m) {
-            const [, tokenString] = m;
-            return tokenString;
-          }
-        }
-        return null;
-      }
-
-      const token = getToken();
+      const token = Microservice.getBearerToken(req);
       if (token) {
         const consumerJwt = verify(token, publicKey, { algorithms: ['RS512'], complete: true });
         const consumer = (consumerJwt.payload as JwtPayload).consumer as ConsumerDef;

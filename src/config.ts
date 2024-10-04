@@ -48,6 +48,7 @@ export interface MicroServiceOptions {
   appDefaultRoles?: string[];
   key?: string;
   cert?: string;
+  forwardUnknownBearer?: boolean;
 }
 
 export interface MicroServiceConfig {
@@ -65,6 +66,7 @@ export interface MicroServiceConfig {
   appDefaultRoles: string[];
   key?: string;
   cert?: string;
+  forwardUnknownBearer?: boolean;
 }
 
 export const Config: MicroServiceConfig = {
@@ -120,5 +122,6 @@ export const Config: MicroServiceConfig = {
       }
     }
     return ret;
-  }, {})
+  }, {}),
+  forwardUnknownBearer: EnvParse.envBool('FW_MS_FORWARD_UNKNOWN_BEARER', false)
 };
