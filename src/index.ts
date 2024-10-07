@@ -16,3 +16,4 @@
 
 export * from './microservice';
 export * from './HTTPError';
+export { MicroServiceOptions } from './config';
