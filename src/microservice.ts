@@ -288,6 +288,11 @@ export class Microservice {
   }
 
   preSharedTokenMiddleware(req: Request, res: Response, next: NextFunction) {
+    const _consumer = getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER);
+    if (_consumer) {
+      next();
+      return;
+    }
     const token = Microservice.getBearerToken(req);
     if (token) {
       if (token.startsWith(this.config.preSharedTokenPrefix)) {
