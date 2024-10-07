@@ -123,5 +123,6 @@ export const Config: MicroServiceConfig = {
     }
     return ret;
   }, {}),
+  // FW_MS_FORWARD_UNKNOWN_BEARER: forward unknown bearer token to the next middleware
   forwardUnknownBearer: EnvParse.envBool('FW_MS_FORWARD_UNKNOWN_BEARER', false)
 };
