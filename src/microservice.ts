@@ -324,16 +324,16 @@ export class Microservice {
   }
 
   jwtMiddleware(jwtPublicKey: string) {
+    const re = /^([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_\-+/=]*)/;
     const publicKey = fs.readFileSync(jwtPublicKey, 'utf8');
     const ms = this;
     return function jwtMiddleware(req: Request, res: Response, next: NextFunction) {
       const _consumer = getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER);
       if (_consumer) {
-        next();
-        return;
+        return next();
       }
       const token = Microservice.getBearerToken(req);
-      if (token) {
+      if (token && re.test(token)) {
         const consumerJwt = verify(token, publicKey, { algorithms: ['RS512'], complete: true });
         const consumer = (consumerJwt.payload as JwtPayload).consumer as ConsumerDef;
         if (consumer) {
