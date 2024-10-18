@@ -77,11 +77,14 @@ export class Microservice {
       );
     }
     if (appKeysCount > 0) {
-      this.express.use((req: Request, res: Response, next: NextFunction) => {
+      this.logger.debug('using preSharedTokenMiddleware');
+      const preSharedTokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
         this.preSharedTokenMiddleware(req, res, next);
-      });
+      };
+      this.express.use(preSharedTokenMiddleware);
     }
     if (this.config.jwtPublicKey) {
+      this.logger.debug('using jwtMiddleware');
       this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
     }
     if (!this.config.forwardUnknownBearer) {
