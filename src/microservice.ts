@@ -293,29 +293,31 @@ export class Microservice {
   preSharedTokenMiddleware(req: Request, res: Response, next: NextFunction) {
     const _consumer = getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER);
     if (_consumer) {
-      next();
-      return;
+      return next();
     }
     const token = Microservice.getBearerToken(req);
     if (token) {
       if (token.startsWith(this.config.preSharedTokenPrefix)) {
         const appName = this.config.appKeys[token];
-        if (!appName) {
-          res.status(401).json({ status: 401, reason: 'Unauthorized' });
-          return;
+        if (appName) {
+          const store = getAsyncLocalStorageStore();
+          if (store === undefined) {
+            next(new Error('failed to initialize request'));
+            return;
+          }
+          const consumer: ConsumerDef = {
+            name: appName,
+            type: 'internal',
+            roles: Config.appRoles[appName] ?? Config.appDefaultRoles,
+            attr: {}
+          };
+          this.addConsumerToContext(consumer);
+        } else {
+          if (!this.config.forwardUnknownBearer) {
+            res.status(401).json({ status: 401, reason: 'Unauthorized' });
+            return;
+          }
         }
-        const store = getAsyncLocalStorageStore();
-        if (store === undefined) {
-          next(new Error('failed to initialize request'));
-          return;
-        }
-        const consumer: ConsumerDef = {
-          name: appName,
-          type: 'internal',
-          roles: Config.appRoles[appName] ?? Config.appDefaultRoles,
-          attr: {}
-        };
-        this.addConsumerToContext(consumer);
       }
     }
     next();
