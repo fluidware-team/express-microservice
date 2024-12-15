@@ -35,18 +35,12 @@ import * as https from 'https';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import * as fs from 'fs';
 import { AddressInfo } from 'node:net';
+import { Consumer, CONSUMER_TYPE } from './types';
 
 export const MicroServiceStoreSymbols = {
   NO_LOG: Symbol('fw.no_log'),
   CONSUMER: Symbol('fw.consumer')
 };
-
-export interface ConsumerDef {
-  name: string;
-  type: string;
-  roles: string[];
-  attr: { [key: string]: string };
-}
 
 export class Microservice {
   private config: MicroServiceConfig;
@@ -92,7 +86,7 @@ export class Microservice {
       this.express.use((req: Request, res: Response, next: NextFunction) => {
         if (
           Microservice.getBearerToken(req) &&
-          !getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER)
+          !getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER)
         ) {
           res.status(401).json({ status: 401, reason: 'Unauthorized' });
           return;
@@ -291,7 +285,7 @@ export class Microservice {
   }
 
   preSharedTokenMiddleware(req: Request, res: Response, next: NextFunction) {
-    const _consumer = getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER);
+    const _consumer = getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER);
     if (_consumer) {
       return next();
     }
@@ -305,11 +299,13 @@ export class Microservice {
             next(new Error('failed to initialize request'));
             return;
           }
-          const consumer: ConsumerDef = {
-            name: appName,
-            type: 'internal',
+          const consumer: Consumer = {
+            id: appName,
             roles: Config.appRoles[appName] ?? Config.appDefaultRoles,
-            attr: {}
+            attr: {
+              name: appName,
+              type: CONSUMER_TYPE.SERVICE
+            }
           };
           this.addConsumerToContext(consumer);
         } else {
@@ -328,14 +324,14 @@ export class Microservice {
     const publicKey = fs.readFileSync(jwtPublicKey, 'utf8');
     const ms = this;
     return function jwtMiddleware(req: Request, res: Response, next: NextFunction) {
-      const _consumer = getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER);
+      const _consumer = getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER);
       if (_consumer) {
         return next();
       }
       const token = Microservice.getBearerToken(req);
       if (token && re.test(token)) {
-        const consumerJwt = verify(token, publicKey, { algorithms: ['RS512'], complete: true });
-        const consumer = (consumerJwt.payload as JwtPayload).consumer as ConsumerDef;
+        const consumerJwt = verify(token, publicKey, { complete: true });
+        const consumer = (consumerJwt.payload as JwtPayload).consumer as Consumer;
         if (consumer) {
           ms.addConsumerToContext(consumer);
         }
@@ -344,12 +340,12 @@ export class Microservice {
     };
   }
 
-  private addConsumerToContext(consumer: ConsumerDef) {
-    setAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER, consumer);
+  private addConsumerToContext(consumer: Consumer) {
+    setAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER, consumer);
     const span = trace.getActiveSpan();
     if (span) {
       span.setAttributes({
-        consumer: consumer.name
+        consumer: consumer.attr.name
       });
     }
   }
@@ -375,12 +371,12 @@ export class Microservice {
     if (store === undefined) {
       return next(new Error('failed to initialize request'));
     }
-    const consumer = getAsyncLocalStorageProp<ConsumerDef>(MicroServiceStoreSymbols.CONSUMER);
+    const consumer = getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER);
     const currentSpan = trace.getSpan(context.active());
     const weblog = getLogger().child({
       traceId: currentSpan?.spanContext().traceId,
-      consumer: consumer?.name,
-      component: 'web'
+      consumer: consumer?.attr.name,
+      component: 'microsrv'
     });
     setAsyncLocalStorageProp(StoreSymbols.LOGGER, weblog);
     res.on('close', function () {
