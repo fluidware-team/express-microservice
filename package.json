@@ -24,14 +24,14 @@
     "node": ">=18.4"
   },
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "4.21.2",
     "express-openapi-validator": "^5.0.6",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@fluidware-it/env2doc": "^0.3.1",
     "@fluidware-it/saddlebag": "*",
-    "@types/express": "^4.17.20",
+    "@types/express": "4.17.21",
     "@types/jest": "^29.5.6",
     "@types/jsonwebtoken": "^9.0.4",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
