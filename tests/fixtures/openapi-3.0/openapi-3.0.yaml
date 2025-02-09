@@ -1,0 +1,187 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Test API
+paths:
+  /:
+    get:
+      summary: Get home API
+      x-eov-operation-handler: Controller
+      operationId: getHome
+      tags:
+        - home
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - homage
+                  - version
+                properties:
+                  homage:
+                    type: string
+                  version:
+                    type: string
+                  testString:
+                    type: string
+                    nullable: true
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+
+  /broken:
+    get:
+      summary: Get broken API
+      x-eov-operation-handler: Controller
+      operationId: getBroken
+      tags:
+        - home
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - homage
+                  - version
+                properties:
+                  homage:
+                    type: string
+                  version:
+                    type: string
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+
+  /protected:
+    get:
+      summary: Get protected API
+      x-eov-operation-handler: Controller
+      operationId: getProtected
+      tags:
+        - protected
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - homage
+                  - version
+                properties:
+                  homage:
+                    type: string
+                  version:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    NotNullOrEmptyString:
+      type: string
+      nullable: false
+      minLength: 1
+      pattern: '^\S+[\S ]*\S+$'
+    BasicErrorModel:
+      type: object
+      required:
+        - status
+        - reason
+      properties:
+        status:
+          type: integer
+          format: int32
+        reason:
+          type: string
+    InvalidPayloadError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 400
+            reason:
+              example: Invalid payload
+    UnauthorizedError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 401
+            reason:
+              example: Unauthorized
+    ForbiddenError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 403
+            reason:
+              example: Forbidden
+    NotFoundError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 404
+            reason:
+              example: Not Found
+    MethodNotAllowedError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 405
+            reason:
+              example: Method Not Allowed
+    ConflictError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 409
+            reason:
+              example: Conflict
+    InternalServerError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 500
+            reason:
+              example: Internal Server Error
