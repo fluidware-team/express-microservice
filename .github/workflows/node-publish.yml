@@ -7,6 +7,6 @@ on:
 
 jobs:
   node-publish:
-    uses: fluidware-team/.github/.github/workflows/node-publish.yml@v1
+    uses: fluidware-team/.github/.github/workflows/node-publish.yml@v2
     secrets:
       npm_token: ${{ secrets.NPM_TOKEN }}
