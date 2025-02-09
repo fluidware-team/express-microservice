@@ -1,6 +1,8 @@
 {
   "name": "@fluidware-it/express-microservice",
   "version": "0.5.0",
+  "type": "commonjs",
+  "private": false,
   "main": "build/src/index.js",
   "module": "build/esm/index.js",
   "esnext": "build/esnext/index.js",
@@ -14,36 +16,41 @@
     "prepack": "npm run compile",
     "compile": "npm run clean && tsc --build tsconfig.json tsconfig.esm.json tsconfig.esnext.json",
     "clean": "tsc --build --clean tsconfig.json tsconfig.esm.json tsconfig.esnext.json",
-    "env2doc": "npm run compile && env2doc -p build/src > ENVIRONMENT.md",
+    "env2doc": "npm run compile && env2doc -d -p build/src > ENVIRONMENT.md",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
     "preversion": "npm run lint && npm run test && npm run env2doc",
-    "test": "jest"
+    "test": "FW_LOGGER_LEVEL=silent jest"
   },
   "engines": {
     "node": ">=18.4"
   },
   "dependencies": {
-    "express": "4.21.2",
-    "express-openapi-validator": "^5.0.6",
-    "jsonwebtoken": "^9.0.2"
+    "express": "5.1.0",
+    "express-openapi-validator": "5.6.0",
+    "jsonwebtoken": "9.0.2"
   },
   "devDependencies": {
-    "@fluidware-it/env2doc": "^0.3.1",
-    "@fluidware-it/saddlebag": "*",
-    "@types/express": "4.17.21",
-    "@types/jest": "^29.5.6",
-    "@types/jsonwebtoken": "^9.0.4",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
-    "eslint": "^8.51.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "jest": "^29.7.0",
-    "prettier": "^3.0.3",
-    "ts-jest": "^29.1.1",
-    "typescript": "^5.2.2"
+    "@fluidware-it/env2doc": "0.3.1",
+    "@fluidware-it/saddlebag": "0.3.0",
+    "@types/express": "5.0.3",
+    "@types/jest": "29.5.14",
+    "@types/jsonwebtoken": "9.0.4",
+    "@types/pem": "1.14.4",
+    "@typescript-eslint/eslint-plugin": "8.46.1",
+    "@typescript-eslint/parser": "8.46.1",
+    "eslint": "9.38.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-n": "17.23.1",
+    "eslint-plugin-prettier": "5.5.4",
+    "globals": "14.0.0",
+    "jest": "30.2.0",
+    "pem": "1.14.8",
+    "prettier": "3.6.2",
+    "ts-jest": "29.4.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.1",
+    "undici": "7.16.0"
   },
   "files": [
     "build/esm/**/*.js",
@@ -59,10 +66,5 @@
   "peerDependencies": {
     "@fluidware-it/saddlebag": "*",
     "@opentelemetry/api": "*"
-  },
-  "jest": {
-    "testPathIgnorePatterns": [
-      "/build/"
-    ]
   }
 }
