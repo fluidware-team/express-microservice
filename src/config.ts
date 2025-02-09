@@ -49,6 +49,11 @@ export interface MicroServiceOptions {
   key?: string;
   cert?: string;
   forwardUnknownBearer?: boolean;
+  openApi?: {
+    specFile: string;
+    validateResponse: boolean;
+    controllersPath: string;
+  };
 }
 
 export interface MicroServiceConfig {
@@ -67,6 +72,28 @@ export interface MicroServiceConfig {
   key?: string;
   cert?: string;
   forwardUnknownBearer?: boolean;
+  openApi?: {
+    specFile: string;
+    validateResponse: boolean;
+    controllersPath: string;
+  };
+}
+
+function getOpenApiConfig() {
+  const specFile = EnvParse.envStringOptional('FW_MS_OPENAPI_SPEC_FILE');
+  const validateResponse = EnvParse.envBool('FW_MS_OPENAPI_VALIDATE_RESPONSE', true);
+  const controllersPath = EnvParse.envStringOptional('FW_MS_OPENAPI_CONTROLLERS_PATH');
+  if (specFile && controllersPath) {
+    return {
+      specFile,
+      validateResponse,
+      controllersPath
+    };
+  }
+  if (specFile || controllersPath) {
+    getLogger().warn('OpenApi configuration is incomplete');
+  }
+  return undefined;
 }
 
 export const Config: MicroServiceConfig = {
@@ -124,5 +151,6 @@ export const Config: MicroServiceConfig = {
     return ret;
   }, {}),
   // FW_MS_FORWARD_UNKNOWN_BEARER: forward unknown bearer token to the next middleware
-  forwardUnknownBearer: EnvParse.envBool('FW_MS_FORWARD_UNKNOWN_BEARER', false)
+  forwardUnknownBearer: EnvParse.envBool('FW_MS_FORWARD_UNKNOWN_BEARER', false),
+  openApi: getOpenApiConfig()
 };

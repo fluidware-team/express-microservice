@@ -15,9 +15,9 @@
  */
 
 import { Config, MicroServiceConfig, MicroServiceOptions } from './config';
-import { Logger } from 'pino';
+import type { Logger } from 'pino';
 import { context, trace } from '@opentelemetry/api';
-import { Request, Response, Express, NextFunction } from 'express';
+import type { Request, Response, Express, NextFunction } from 'express';
 import * as express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
 import { HTTPError } from './HTTPError';
@@ -63,7 +63,7 @@ export class Microservice {
     this.express.disable('x-powered-by');
     this.express.set('trust proxy', this.config.trustProxy);
     this.setupInitialMiddlewares();
-    this.express.use(this.instrument);
+    this.express.use(this.initRequestAsyncLocalStorage);
     const appKeysCount = Object.keys(this.config.appKeys).length;
     if (this.config.jwtPublicKey && !this.config.preSharedTokenPrefix && appKeysCount > 0) {
       this.logger.error(
@@ -99,6 +99,13 @@ export class Microservice {
 
     this.setupPreBodyParsersMiddlewares();
     this.setupBodyParsersMiddlewares();
+    if (this.config.openApi) {
+      this.useOpenapiValidatorMiddleware(
+        this.config.openApi.specFile,
+        this.config.openApi.controllersPath,
+        this.config.openApi.validateResponse
+      );
+    }
     this.setupPostBodyParsersMiddlewares();
 
     this.setupParams();
@@ -110,8 +117,7 @@ export class Microservice {
     // Note: we go through some acrobatics to make sure the arity of the
     // function passed to use() is 4.
 
-    // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
-    const errorHandlerWrap = (err: HTTPError, req: Request, res: Response, next: NextFunction) => {
+    const errorHandlerWrap = (err: HTTPError, req: Request, res: Response, _next: NextFunction) => {
       this.errorHandler(err, req, res);
     };
     this.express.use(errorHandlerWrap);
@@ -215,14 +221,12 @@ export class Microservice {
     }
     return new Promise((resolve, reject) => {
       const onError = (err: Error) => {
-        // eslint-disable-next-line no-use-before-define
         clearListeners();
         // this.srv = null;
         reject(err);
       };
 
       const onClose = () => {
-        // eslint-disable-next-line no-use-before-define
         clearListeners();
         // this.srv = null;
         resolve(true);
@@ -242,7 +246,7 @@ export class Microservice {
     // If there's no server, no need to do this
   }
 
-  instrument(req: Request, res: Response, next: NextFunction) {
+  initRequestAsyncLocalStorage(req: Request, res: Response, next: NextFunction) {
     const asyncLocalStorage = getAsyncLocalStorage();
     const store = {} as Store;
     asyncLocalStorage
@@ -423,7 +427,6 @@ export class Microservice {
     });
   }
 
-  // eslint-disable-next-line no-unused-vars
   noRouteMatch = (req: Request, res: Response, next: (err?: Error) => void) => {
     // OPTIONS default handler falls through here; let it
     if (req.method === 'OPTIONS') {
