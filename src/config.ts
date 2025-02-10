@@ -98,6 +98,13 @@ function getOpenApiConfig() {
 
 let _appRoles: Record<string, string[]> = {};
 
+function readFileContent(filePath: string | undefined): string | undefined {
+  if (!filePath) {
+    return undefined;
+  }
+  return fs.readFileSync(filePath, 'utf8');
+}
+
 export const Config: MicroServiceConfig = {
   port: EnvParse.envInt('FW_MS_PORT', 8080),
   log404: EnvParse.envBool('FW_MS_LOG_404', false),
@@ -109,8 +116,12 @@ export const Config: MicroServiceConfig = {
   maxUploadSize: EnvParse.envString('FW_MS_MAX_UPLOAD_SIZE', '128kb'),
   preSharedTokenPrefix: preSharedTokenPrefix || '',
   jwtPublicKey: EnvParse.envStringOptional('FW_MS_JWT_PUBLIC_KEY'),
-  key: EnvParse.envStringOptional('FW_MS_KEY'),
-  cert: EnvParse.envStringOptional('FW_MS_CERT'),
+  // FW_MS_KEY: full key for https (wins over FW_MS_KEY_FILE)
+  // FW_MS_KEY_FILE: path to file containing full key for https
+  key: EnvParse.envStringOptional('FW_MS_KEY') || readFileContent(EnvParse.envStringOptional('FW_MS_KEY_FILE')),
+  // FW_MS_CERT: full cert for https (wins over FW_MS_CERT_FILE)
+  // FW_MS_CERT_FILE: path to file containing full cert for https
+  cert: EnvParse.envStringOptional('FW_MS_CERT') || readFileContent(EnvParse.envStringOptional('FW_MS_CERT_FILE')),
   appDefaultRoles: EnvParse.envStringList('FW_APP_DEFAULT_ROLES', ['admin']),
   appKeys: Object.keys(environment).reduce((ret: { [key: string]: string }, name) => {
     const value = environment[name];
