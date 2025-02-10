@@ -64,22 +64,17 @@ export class Microservice {
     this.express.set('trust proxy', this.config.trustProxy);
     this.setupInitialMiddlewares();
     this.express.use(this.initRequestAsyncLocalStorage);
-    const appKeysCount = Object.keys(this.config.appKeys).length;
-    if (this.config.jwtPublicKey && !this.config.preSharedTokenPrefix && appKeysCount > 0) {
-      this.logger.error(
-        'you have configured FW_MS_JWT_PUBLIC_KEY but not FW_MS_PRE_SHARED_TOKEN_PREFIX, no app key will match'
-      );
+    if (this.config.jwtPublicKey) {
+      this.logger.debug('using jwtMiddleware');
+      this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
     }
+    const appKeysCount = Object.keys(this.config.appKeys).length;
     if (appKeysCount > 0) {
       this.logger.debug('using preSharedTokenMiddleware');
       const preSharedTokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
         this.preSharedTokenMiddleware(req, res, next);
       };
       this.express.use(preSharedTokenMiddleware);
-    }
-    if (this.config.jwtPublicKey) {
-      this.logger.debug('using jwtMiddleware');
-      this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
     }
     if (!this.config.forwardUnknownBearer) {
       // at this point, if a bearer token is present, we should have a consumer in the context, otherwise it's an invalid token
@@ -289,6 +284,7 @@ export class Microservice {
   }
 
   preSharedTokenMiddleware(req: Request, res: Response, next: NextFunction) {
+    const logger = getLogger();
     const _consumer = getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER);
     if (_consumer) {
       return next();
@@ -298,6 +294,7 @@ export class Microservice {
       if (token.startsWith(this.config.preSharedTokenPrefix)) {
         const appName = this.config.appKeys[token];
         if (appName) {
+          logger.trace(`found pre-shared token for ${appName}`);
           const store = getAsyncLocalStorageStore();
           if (store === undefined) {
             next(new Error('failed to initialize request'));
@@ -313,12 +310,18 @@ export class Microservice {
           };
           this.addConsumerToContext(consumer);
         } else {
+          logger.debug('unknown bearer token');
           if (!this.config.forwardUnknownBearer) {
             res.status(401).json({ status: 401, reason: 'Unauthorized' });
             return;
           }
+          logger.trace('forwardUnknownBearer is true, moving on');
         }
+      } else {
+        logger.trace('not a pre-shared token');
       }
+    } else {
+      logger.trace('no bearer token found');
     }
     next();
   }
@@ -328,17 +331,24 @@ export class Microservice {
     const publicKey = fs.readFileSync(jwtPublicKey, 'utf8');
     const ms = this;
     return function jwtMiddleware(req: Request, res: Response, next: NextFunction) {
+      const logger = getLogger();
       const _consumer = getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER);
       if (_consumer) {
         return next();
       }
       const token = Microservice.getBearerToken(req);
-      if (token && re.test(token)) {
-        const consumerJwt = verify(token, publicKey, { complete: true });
-        const consumer = (consumerJwt.payload as JwtPayload).consumer as Consumer;
-        if (consumer) {
-          ms.addConsumerToContext(consumer);
+      if (token) {
+        if (re.test(token)) {
+          const consumerJwt = verify(token, publicKey, { complete: true });
+          const consumer = (consumerJwt.payload as JwtPayload).consumer as Consumer;
+          if (consumer) {
+            ms.addConsumerToContext(consumer);
+          }
+        } else {
+          logger.trace('not a valid jwt token');
         }
+      } else {
+        logger.trace('no bearer token found');
       }
       next();
     };
