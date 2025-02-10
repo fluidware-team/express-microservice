@@ -96,6 +96,8 @@ function getOpenApiConfig() {
   return undefined;
 }
 
+let _appRoles: Record<string, string[]> = {};
+
 export const Config: MicroServiceConfig = {
   port: EnvParse.envInt('FW_MS_PORT', 8080),
   log404: EnvParse.envBool('FW_MS_LOG_404', false),
@@ -110,7 +112,6 @@ export const Config: MicroServiceConfig = {
   key: EnvParse.envStringOptional('FW_MS_KEY'),
   cert: EnvParse.envStringOptional('FW_MS_CERT'),
   appDefaultRoles: EnvParse.envStringList('FW_APP_DEFAULT_ROLES', ['admin']),
-  appRoles: {},
   appKeys: Object.keys(environment).reduce((ret: { [key: string]: string }, name) => {
     const value = environment[name];
     function checkTokenPrefix(appName: string, token: string) {
@@ -144,12 +145,13 @@ export const Config: MicroServiceConfig = {
         // APP_${appName}_ROLES: roles to assign to appName
         const appRoles = EnvParse.envStringList<string>(`APP_${appName}_ROLES`, []);
         if (appRoles.length > 0) {
-          Config.appRoles[appName.toLowerCase()] = appRoles;
+          _appRoles[appName.toLowerCase()] = appRoles;
         }
       }
     }
     return ret;
   }, {}),
+  appRoles: _appRoles,
   // FW_MS_FORWARD_UNKNOWN_BEARER: forward unknown bearer token to the next middleware
   forwardUnknownBearer: EnvParse.envBool('FW_MS_FORWARD_UNKNOWN_BEARER', false),
   openApi: getOpenApiConfig()
