@@ -31,7 +31,7 @@
     "jsonwebtoken": "9.0.2"
   },
   "devDependencies": {
-    "@fluidware-it/env2doc": "0.3.1",
+    "@fluidware-it/env2doc": "0.3.2",
     "@fluidware-it/saddlebag": "0.3.0",
     "@types/express": "5.0.3",
     "@types/jest": "29.5.14",
