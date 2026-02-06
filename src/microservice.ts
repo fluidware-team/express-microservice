@@ -16,7 +16,7 @@
 
 import { Config, MicroServiceConfig, MicroServiceOptions } from './config';
 import type { Logger } from 'pino';
-import { context, trace } from '@opentelemetry/api';
+import { trace } from '@opentelemetry/api';
 import type { Request, Response, Express, NextFunction } from 'express';
 import * as express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
@@ -386,11 +386,8 @@ export class Microservice {
       return next(new Error('failed to initialize request'));
     }
     const consumer = getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER);
-    const currentSpan = trace.getSpan(context.active());
     const weblog = getLogger().child({
-      traceId: currentSpan?.spanContext().traceId,
-      consumer: consumer?.attr.name,
-      component: 'microsrv'
+      consumer: consumer?.attr.name
     });
     setAsyncLocalStorageProp(StoreSymbols.LOGGER, weblog);
     res.on('close', function () {
