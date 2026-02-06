@@ -73,7 +73,8 @@ describe('should start accepting TLS connections', () => {
       process.env.FW_MS_CERT_FILE = join(certDir, 'cert.pem');
       const { Microservice } = await import('../src');
       server = new Microservice({
-        port: 0
+        port: 0,
+        trustProxy: false
       });
       const addr = await server.start();
       port = addr.port;

@@ -22,7 +22,7 @@
 | FW_MS_OPENAPI_VALIDATE_RESPONSE |  boolean |                           true |          |                                                     |
 | FW_MS_PORT                      |  integer |                           8080 |          |                                                     |
 | FW_MS_PRE_SHARED_TOKEN_PREFIX   |   string |                                |          |                                                     |
-| FW_MS_TRUST_PROXY               | string[] | loopback,linklocal,uniquelocal |          |                                                     |
+| FW_MS_TRUST_PROXY               |   string | loopback,linklocal,uniquelocal |          |                                                     |
 
 ## @fluidware-it/saddlebag@0.3.0
 

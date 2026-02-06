@@ -39,7 +39,7 @@ export interface MicroServiceOptions {
   hostname?: string;
   address?: string;
   addresses?: string[];
-  trustProxy?: string[];
+  trustProxy?: string[] | boolean;
   maxUploadSize?: string;
   preSharedTokenPrefix?: string;
   jwtPublicKey?: string;
@@ -62,7 +62,7 @@ export interface MicroServiceConfig {
   hostname: string;
   address?: string;
   addresses: string[];
-  trustProxy: string[];
+  trustProxy: string[] | boolean;
   maxUploadSize: string;
   preSharedTokenPrefix: string;
   jwtPublicKey?: string;
@@ -105,6 +105,20 @@ function readFileContent(filePath: string | undefined): string | undefined {
   return fs.readFileSync(filePath, 'utf8');
 }
 
+function getTrustProxy(): string[] | boolean {
+  const trustProxy = EnvParse.envString('FW_MS_TRUST_PROXY', 'loopback,linklocal,uniquelocal');
+  if (trustProxy === 'true') {
+    return true;
+  }
+  if (trustProxy === 'false') {
+    return false;
+  }
+  return trustProxy
+    .split(',')
+    .map(s => s.trim())
+    .filter(x => x !== '');
+}
+
 export const Config: MicroServiceConfig = {
   port: EnvParse.envInt('FW_MS_PORT', 8080),
   log404: EnvParse.envBool('FW_MS_LOG_404', false),
@@ -112,7 +126,7 @@ export const Config: MicroServiceConfig = {
   hostname: EnvParse.envString('FW_MS_HOSTNAME', hostname()),
   address: EnvParse.envStringOptional('FW_MS_ADDRESS'),
   addresses: EnvParse.envStringList('FW_MS_ADDRESSES', []),
-  trustProxy: EnvParse.envStringList('FW_MS_TRUST_PROXY', ['loopback', 'linklocal', 'uniquelocal']),
+  trustProxy: getTrustProxy(),
   maxUploadSize: EnvParse.envString('FW_MS_MAX_UPLOAD_SIZE', '128kb'),
   preSharedTokenPrefix: preSharedTokenPrefix || '',
   jwtPublicKey: EnvParse.envStringOptional('FW_MS_JWT_PUBLIC_KEY'),
