@@ -42,6 +42,7 @@ export interface MicroServiceOptions {
   trustProxy?: string[] | boolean;
   maxUploadSize?: string;
   preSharedTokenPrefix?: string;
+  byoa?: boolean;
   jwtPublicKey?: string;
   appKeys?: LocalApplication;
   appRoles?: ApplicationRoles;
@@ -66,6 +67,7 @@ export interface MicroServiceConfig {
   maxUploadSize: string;
   preSharedTokenPrefix: string;
   jwtPublicKey?: string;
+  byoa?: boolean;
   appKeys: LocalApplication;
   appRoles: ApplicationRoles;
   appDefaultRoles: string[];
@@ -129,6 +131,8 @@ export const Config: MicroServiceConfig = {
   trustProxy: getTrustProxy(),
   maxUploadSize: EnvParse.envString('FW_MS_MAX_UPLOAD_SIZE', '128kb'),
   preSharedTokenPrefix: preSharedTokenPrefix || '',
+  // FW_MS_BYOA: Bring Your Own Authenticator
+  byoa: EnvParse.envBool('FW_MS_BYOA', false),
   jwtPublicKey: EnvParse.envStringOptional('FW_MS_JWT_PUBLIC_KEY'),
   // FW_MS_KEY: full key for https (wins over FW_MS_KEY_FILE)
   // FW_MS_KEY_FILE: path to file containing full key for https

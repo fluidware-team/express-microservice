@@ -64,30 +64,34 @@ export class Microservice {
     this.express.set('trust proxy', this.config.trustProxy);
     this.setupInitialMiddlewares();
     this.express.use(this.initRequestAsyncLocalStorage);
-    if (this.config.jwtPublicKey) {
-      this.logger.debug('using jwtMiddleware');
-      this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
-    }
-    const appKeysCount = Object.keys(this.config.appKeys).length;
-    if (appKeysCount > 0) {
-      this.logger.debug('using preSharedTokenMiddleware');
-      const preSharedTokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
-        this.preSharedTokenMiddleware(req, res, next);
-      };
-      this.express.use(preSharedTokenMiddleware);
-    }
-    if (!this.config.forwardUnknownBearer) {
-      // at this point, if a bearer token is present, we should have a consumer in the context, otherwise it's an invalid token
-      this.express.use((req: Request, res: Response, next: NextFunction) => {
-        if (
-          Microservice.getBearerToken(req) &&
-          !getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER)
-        ) {
-          res.status(401).json({ status: 401, reason: 'Unauthorized' });
-          return;
-        }
-        next();
-      });
+    if (!this.config.byoa) {
+      if (this.config.jwtPublicKey) {
+        this.logger.debug('using jwtMiddleware');
+        this.express.use(this.jwtMiddleware(this.config.jwtPublicKey));
+      }
+      const appKeysCount = Object.keys(this.config.appKeys).length;
+      if (appKeysCount > 0) {
+        this.logger.debug('using preSharedTokenMiddleware');
+        const preSharedTokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
+          this.preSharedTokenMiddleware(req, res, next);
+        };
+        this.express.use(preSharedTokenMiddleware);
+      }
+      if (!this.config.forwardUnknownBearer) {
+        // at this point, if a bearer token is present, we should have a consumer in the context, otherwise it's an invalid token
+        this.express.use((req: Request, res: Response, next: NextFunction) => {
+          if (
+            Microservice.getBearerToken(req) &&
+            !getAsyncLocalStorageProp<Consumer>(MicroServiceStoreSymbols.CONSUMER)
+          ) {
+            res.status(401).json({ status: 401, reason: 'Unauthorized' });
+            return;
+          }
+          next();
+        });
+      }
+    } else {
+      this.logger.info('Bring Your Own Authorization is ON');
     }
     this.setupPreLoggerMiddlewares();
     this.express.use(this.requestLogger);
@@ -339,10 +343,15 @@ export class Microservice {
       const token = Microservice.getBearerToken(req);
       if (token) {
         if (re.test(token)) {
-          const consumerJwt = verify(token, publicKey, { complete: true });
-          const consumer = (consumerJwt.payload as JwtPayload).consumer as Consumer;
-          if (consumer) {
-            ms.addConsumerToContext(consumer);
+          try {
+            const consumerJwt = verify(token, publicKey, { complete: true });
+            const consumer = (consumerJwt.payload as JwtPayload).consumer as Consumer;
+            if (consumer) {
+              ms.addConsumerToContext(consumer);
+            }
+          } catch (err) {
+            const e = err as Error;
+            logger.debug(`invalid jwt token: ${e.message}`);
           }
         } else {
           logger.trace('not a valid jwt token');

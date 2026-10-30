@@ -27,9 +27,11 @@ describe('test jwt middleware', () => {
     let server: Microservice;
     let port: number;
     let keys: CertificateCreationResult;
+    let entrustedKeys: CertificateCreationResult;
     let clientCertPath: string;
     beforeAll(async () => {
       keys = await createCerts();
+      entrustedKeys = await createCerts();
       const tmpPath = await mkdtemp(os.tmpdir() + '/certs-');
       clientCertPath = path.join(tmpPath, 'client-cert.pem');
       const publicKey = await getPemPublicKey(keys.clientKey);
@@ -64,6 +66,17 @@ describe('test jwt middleware', () => {
       const res = await fetch(`http://localhost:${port}/protected`, { headers: { Authorization: `Bearer ${token}` } });
       await res.json();
       expect(res.status).toBe(200);
+    });
+
+    it('must reject requests with invalid jwt', async () => {
+      const token = jwt.sign(
+        { consumer: { id: 'a', roles: ['admin'], attr: { name: 'test', type: 'user' } } },
+        entrustedKeys.serviceKey,
+        { expiresIn: 3600, algorithm: 'RS256' }
+      );
+      const res = await fetch(`http://localhost:${port}/protected`, { headers: { Authorization: `Bearer ${token}` } });
+      await res.json();
+      expect(res.status).toBe(401);
     });
   });
   describe('with app keys and prefix', () => {
@@ -114,6 +127,13 @@ describe('test jwt middleware', () => {
       const res = await fetch(`http://localhost:${port}/protected`, { headers: { Authorization: `Bearer test_key` } });
       await res.json();
       expect(res.status).toBe(200);
+    });
+    it('must reject requests with unknown pre shared token', async () => {
+      const res = await fetch(`http://localhost:${port}/protected`, {
+        headers: { Authorization: `Bearer unknown_key` }
+      });
+      await res.json();
+      expect(res.status).toBe(401);
     });
   });
 
